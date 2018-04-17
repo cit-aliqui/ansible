@@ -1,0 +1,9 @@
+# Access variables with cli using --extra-vars option
+# ansible-playbook playbooks/03-access-vars-from-cli.yml --extra-vars=x=30
+
+- name: Access variables from CLI 
+  hosts: all 
+  tasks: 
+    - name: Access variable from CLI 
+      debug:
+        msg: "X = {{x}}"

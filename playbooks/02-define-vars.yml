@@ -1,0 +1,11 @@
+- name: Define and access variables 
+  hosts: all 
+  vars:
+    x: 10
+  tasks:
+    - name: Print x value 
+      vars: 
+        x: 20
+      debug:
+        msg: "X = {{x}}"
+      

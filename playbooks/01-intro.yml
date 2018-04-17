@@ -1,0 +1,19 @@
+- name: Play1 
+  hosts: all 
+  tasks:
+    - name: Check Ping 
+      ping: 
+
+    - name: Print Hello 
+      debug:
+        msg: Hello 
+
+- name: Play2
+  hosts: all 
+  tasks: 
+    - name: Check Ping 
+      ping: 
+
+    - name: Print Hwllo World 
+      debug:
+        msg: Hello World
