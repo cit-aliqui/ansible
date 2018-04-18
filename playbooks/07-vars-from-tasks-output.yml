@@ -1,0 +1,23 @@
+- name: Run a task to generate output
+  hosts: all
+  tasks:
+    - name: Run date command
+      shell: date +%F
+      register: out
+
+    - name: Print date output 
+      debug:
+        msg: "{{out.stdout}}"
+
+    - name: Define DATE variable 
+      set_fact:
+        DATE: "{{out.stdout}}"
+
+    - name: Access DATE Variable 
+      debug:
+        msg: "Date = {{DATE}}"
+
+        
+
+
+

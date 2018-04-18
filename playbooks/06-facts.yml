@@ -1,0 +1,11 @@
+- name: Access facts
+  hosts: all
+  #gather_facts: no
+  tasks: 
+    - name: Print fact
+      debug:
+        msg: "{{ansible_hostname}}"
+        
+    - name: Print fact
+      debug:
+        msg: "{{ansible_cmdline.BOOT_IMAGE}}"

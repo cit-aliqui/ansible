@@ -1,0 +1,32 @@
+- name: Demo on loops
+  hosts: all
+  tasks:
+    - name: Print multiple values
+      debug:
+        msg: "{{item}}"
+      with_items:
+        - Raju
+        - Rahim
+
+    - name: Print multiple values
+      debug:
+        msg: "{{item}}"
+      loop:
+        - Raju
+        - Rahim 
+    
+    - debug:
+        msg: "{{ item }}"
+      vars:
+        nested_list:
+          - - one
+            - two
+            - three
+      with_items: "{{ nested_list }}"
+
+  ## Nested Loop
+    - debug:
+        msg: "{{item[0]}}  , {{item[1]}}"
+      with_nested:
+        - [ 'alice', 'bob' ]
+        - [ 'clientdb', 'employeedb', 'providerdb' ]

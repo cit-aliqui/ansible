@@ -1,0 +1,10 @@
+- name: Access vars from files
+  hosts: all
+  vars_files:
+    - vars.yml
+  tasks: 
+    - name: Print X 
+      debug:
+        msg: "X = {{x}}"
+      vars:
+        x: 10

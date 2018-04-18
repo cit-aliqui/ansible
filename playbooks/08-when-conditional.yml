@@ -1,0 +1,10 @@
+- name: When conditions
+  hosts: all
+  vars:
+    x: 11
+  tasks:
+    - name: Print X if it is greater than 10
+      debug:
+        msg: "X = {{x}}"
+      when: x > 10
+

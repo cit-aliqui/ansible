@@ -1,0 +1,9 @@
+- name: Check Linux process using until loop
+  hosts: all
+  tasks:
+    - name: Check linux process
+      shell: ps -ef | grep UPTIME | grep -v grep | grep -v ssh
+      register: result
+      until: result.rc == 0
+      retries: 5
+      delay: 10
