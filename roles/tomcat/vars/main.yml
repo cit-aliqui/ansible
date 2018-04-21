@@ -1,0 +1,7 @@
+TOMCAT_URL: http://redrockdigimark.com/apachemirror/tomcat/tomcat-9/v9.0.7/bin/apache-tomcat-9.0.7.tar.gz
+WAR_URL: https://github.com/cit-aliqui/APP-STACK/raw/master/student.war
+JAR_URL: https://github.com/cit-aliqui/APP-STACK/raw/master/mysql-connector-java-5.1.40.jar
+DBNAME: studentapp 
+DBPASS: student@1
+DBUSER: student
+DBIP: "{{ansible_hostname}}"

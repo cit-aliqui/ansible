@@ -1,0 +1,62 @@
+- name: Install Web Server Packages
+  package:
+    name: "{{item}}"
+    state: installed 
+  loop:
+    - httpd 
+    - httpd-devel
+    - gcc 
+
+- name: Get MOD-JK Dir 
+  shell: echo {{MODJK_URL}} |awk -F / '{print $NF}' |sed -e 's/.tar.gz//'
+  register: out
+- name: Define MOD-JK Dir 
+  set_fact:
+    MODJK_DIR: "{{out.stdout}}"
+- name: Check Existing ModJK 
+  stat: 
+    path: "/etc/httpd/modules/mod_jk.so"
+  register: out 
+- name: Download ModJK
+  unarchive:
+    src: "{{MODJK_URL}}" 
+    dest: /opt
+    remote_src: yes
+  when: out.stat.exists == false  
+- name: Compile ModJK 
+  shell: ./configure --with-apxs=/usr/bin/apxs && make && make install 
+  args:
+    chdir: "/opt/{{MODJK_DIR}}/native"
+  when: out.stat.exists == false
+- name: Remove old Conf files
+  file:
+    path: "{{item}}"
+    state: absent 
+  loop:
+    - /etc/httpd/conf.d/mod-jk.conf
+    - /etc/httpd/conf.d/worker.properties
+- name: Update Mod_jk Conf
+  blockinfile:
+    path: /etc/httpd/conf.d/mod-jk.conf
+    create: yes
+    block: |
+      LoadModule jk_module modules/mod_jk.so
+      JkWorkersFile conf.d/worker.properties
+      JkMount /student local
+      JkMount /student/* local
+
+- name: Update worker.properties file 
+  blockinfile:
+    path: /etc/httpd/conf.d/worker.properties
+    create: yes
+    block: |
+      worker.list=local
+      worker.local.host=localhost
+      worker.local.port=8009
+- name: Restart Web Server 
+  service:
+    name: httpd 
+    state: restarted  
+    enabled: yes 
+
+

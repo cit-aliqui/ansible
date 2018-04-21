@@ -1,0 +1,22 @@
+- name: Install and Configure DB Service 
+  hosts: all 
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: Include DB Role
+      tags:
+        - DB
+      include_role:
+        name: mariadb
+      
+    - name: Include APP ROle
+      tags:
+        - APP
+      include_role:
+        name: tomcat
+ 
+    - name: Include WEB Role
+      tags:
+        - WEB
+      include_role:
+        name: httpd

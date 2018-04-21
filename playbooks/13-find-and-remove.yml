@@ -1,0 +1,16 @@
+- name: Find and remove files and directories 
+  hosts: all
+  become: yes 
+  tasks:
+    - name: Find files 
+      find: 
+        paths: /opt/sample 
+        file_type: any
+      register: out 
+    
+    - debug: msg="{{out}}" 
+
+    - file: 
+        path: "{{item.path}}"
+        state: absent
+      loop: "{{out.files}}"

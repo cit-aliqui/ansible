@@ -1,0 +1,203 @@
+- name: Install and Configure DB Service 
+  hosts: all 
+  become: yes
+  gather_facts: yes
+  tags:
+    - DB
+  tasks:
+    - name: Install MariaDB Server 
+      package:
+        name: "{{item}}"
+        state: installed
+      loop:
+        - MySQL-python
+        - mariadb-server 
+
+    - name: Start MariaDB Service 
+      service:
+        name: mariadb 
+        state: started 
+        enabled: yes 
+
+    - name: Create studentapp Database
+      mysql_db:
+        name: studentapp
+        state: present
+
+    - name: Copy Schema file 
+      copy:
+        src: studentapp.sql 
+        dest: /tmp/studentapp.sql 
+
+    - name: Import SQL file 
+      mysql_db:
+        state: import
+        name: studentapp
+        target: /tmp/studentapp.sql 
+        
+    - name: Create DB User 
+      mysql_user:
+        name: student
+        password: student@1
+        priv: '*.*:ALL,GRANT'
+        state: present
+        host: "{{ansible_fqdn}}"
+
+- name: Install and Configure Tomcat Service 
+  hosts: all 
+  become: yes
+  gather_facts: yes
+  tags:
+    - APP
+  vars:
+    TOMCAT_URL: http://redrockdigimark.com/apachemirror/tomcat/tomcat-9/v9.0.7/bin/apache-tomcat-9.0.7.tar.gz
+    WAR_URL: https://github.com/cit-aliqui/APP-STACK/raw/master/student.war
+    JAR_URL: https://github.com/cit-aliqui/APP-STACK/raw/master/mysql-connector-java-5.1.40.jar
+    DBNAME: studentapp 
+    DBPASS: student@1
+    DBUSER: student
+    DBIP: "{{ansible_hostname}}"
+    
+  tasks:
+    - name: Install Java 
+      package:
+        name: java 
+        state: installed 
+
+    - name: Get Tomcat Directory 
+      shell: echo {{TOMCAT_URL}} | awk -F / '{print $NF}' | sed -e 's/.tar.gz//'
+      register: out 
+
+    - name: Define Tomcat Directory 
+      set_fact:
+        TOMCAT_DIR: "/opt/{{out.stdout}}"
+
+    - name: Check Existing TOmcat 
+      stat: 
+        path: "{{TOMCAT_DIR}}"
+      register: out 
+
+    - name: Download Tomcat 
+      unarchive:
+        src: "{{TOMCAT_URL}}" 
+        dest: /opt
+        remote_src: yes
+      when: out.stat.exists == false
+      
+    - name: Find the files 
+      find:
+        paths: "{{TOMCAT_DIR}}/webapps"
+        file_type: any
+      register: out 
+
+    - name: Remove the files 
+      file:
+        path: "{{item.path}}"
+        state: absent
+      loop: "{{out.files}}"
+      
+    - name: Download WAR file 
+      get_url:
+        url: "{{WAR_URL}}"
+        dest: "{{TOMCAT_DIR}}/webapps/student.war"
+
+    - name: Download JAR File 
+      get_url:
+        url: "{{JAR_URL}}"
+        dest: "{{TOMCAT_DIR}}/lib/mysql-connector-java.jar" 
+
+    - name:  Copy Context.xml file 
+      template: 
+        src: context.xml.j2 
+        dest: "{{TOMCAT_DIR}}/conf/context.xml"
+
+    - name: Check tomcat is running or not 
+      shell: ps -ef | grep java | grep -v grep 
+      register: out
+      ignore_errors: True
+
+    - name: Stop Tomcat 
+      shell: "nohup {{TOMCAT_DIR}}/bin/shutdown.sh"
+      when: out.rc == 0
+
+    - name: Start Tomcat 
+      shell: "nohup {{TOMCAT_DIR}}/bin/startup.sh"
+
+
+- name: Install and Configure Tomcat Service 
+  hosts: all 
+  become: yes
+  tags:
+    - WEB
+  vars:
+    MODJK_URL: http://www-us.apache.org/dist/tomcat/tomcat-connectors/jk/tomcat-connectors-1.2.43-src.tar.gz 
+  tasks:
+    - name: Install Web Server Packages
+      package:
+        name: "{{item}}"
+        state: installed 
+      loop:
+        - httpd 
+        - httpd-devel
+        - gcc 
+    
+    - name: Get MOD-JK Dir 
+      shell: echo {{MODJK_URL}} |awk -F / '{print $NF}' |sed -e 's/.tar.gz//'
+      register: out
+
+    - name: Define MOD-JK Dir 
+      set_fact:
+        MODJK_DIR: "{{out.stdout}}"
+
+    - name: Check Existing ModJK 
+      stat: 
+        path: "/etc/httpd/modules/mod_jk.so"
+      register: out 
+
+    - name: Download ModJK
+      unarchive:
+        src: "{{MODJK_URL}}" 
+        dest: /opt
+        remote_src: yes
+      when: out.stat.exists == false  
+
+    - name: Compile ModJK 
+      shell: ./configure --with-apxs=/usr/bin/apxs && make && make install 
+      args:
+        chdir: "/opt/{{MODJK_DIR}}/native"
+      when: out.stat.exists == false
+
+    - name: Remove old Conf files
+      file:
+        path: "{{item}}"
+        state: absent 
+      loop:
+        - /etc/httpd/conf.d/mod-jk.conf
+        - /etc/httpd/conf.d/worker.properties
+
+    - name: Update Mod_jk Conf
+      blockinfile:
+        path: /etc/httpd/conf.d/mod-jk.conf
+        create: yes
+        block: |
+          LoadModule jk_module modules/mod_jk.so
+          JkWorkersFile conf.d/worker.properties
+          JkMount /student local
+          JkMount /student/* local
+    
+    - name: Update worker.properties file 
+      blockinfile:
+        path: /etc/httpd/conf.d/worker.properties
+        create: yes
+        block: |
+          worker.list=local
+          worker.local.host=localhost
+          worker.local.port=8009
+
+    - name: Restart Web Server 
+      service:
+        name: httpd 
+        state: restarted  
+        enabled: yes 
+
+

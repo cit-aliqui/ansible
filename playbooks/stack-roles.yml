@@ -1,0 +1,25 @@
+- name: Install and Configure DB Service 
+  hosts: all 
+  become: yes
+  gather_facts: yes
+  tags:
+    - DB
+  roles:
+    - mariadb
+
+- name: Install and Configure Tomcat Service 
+  hosts: all 
+  become: yes
+  gather_facts: yes
+  tags:
+    - APP
+  roles:
+    - tomcat 
+
+- name: Install and Configure Tomcat Service 
+  hosts: all 
+  become: yes
+  tags:
+    - WEB
+  roles:
+    - httpd

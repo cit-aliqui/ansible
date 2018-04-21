@@ -1,0 +1,7 @@
+- name: Demo on include Role 
+  hosts: all 
+  tasks:
+    - name: Include a role 
+      include_role:
+        name: sample
+        

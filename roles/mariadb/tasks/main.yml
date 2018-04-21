@@ -1,0 +1,33 @@
+- name: Install MariaDB Server 
+  package:
+    name: "{{item}}"
+    state: installed
+  loop:
+    - MySQL-python
+    - mariadb-server 
+- name: Start MariaDB Service 
+  service:
+    name: mariadb 
+    state: started 
+    enabled: yes 
+- name: Create studentapp Database
+  mysql_db:
+    name: studentapp
+    state: present
+- name: Copy Schema file 
+  copy:
+    src: studentapp.sql 
+    dest: /tmp/studentapp.sql 
+- name: Import SQL file 
+  mysql_db:
+    state: import
+    name: studentapp
+    target: /tmp/studentapp.sql 
+    
+- name: Create DB User 
+  mysql_user:
+    name: student
+    password: student@1
+    priv: '*.*:ALL,GRANT'
+    state: present
+    host: "{{ansible_fqdn}}"

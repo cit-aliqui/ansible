@@ -1,0 +1,15 @@
+- name: Play1 DB 
+  hosts: all 
+  tags:
+    - DB
+  tasks:
+    - debug:
+        msg: DB 
+
+- name: Play2 Tomcat
+  hosts: all 
+  tags:
+    - APP
+  tasks:
+    - debug:
+        msg: Tomcat

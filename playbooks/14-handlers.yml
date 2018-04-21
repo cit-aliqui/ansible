@@ -1,0 +1,15 @@
+- name: Demo on handlers 
+  hosts: all 
+  become: yes
+  tasks:
+    - name: Run some task 
+      package:
+        name: httpd 
+        state: installed 
+      notify: Run restart 
+      
+  handlers:
+    - name: Run restart 
+      service: 
+        name: httpd 
+        state: restarted
