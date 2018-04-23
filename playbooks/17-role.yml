@@ -1,0 +1,6 @@
+- name: Use galazy role 
+  hosts: all
+  become: yes
+  gather_facts: yes
+  roles:
+    - nginx

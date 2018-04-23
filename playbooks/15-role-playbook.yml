@@ -1,4 +1,5 @@
 - name: Demo on using roles 
   hosts: all 
+  become: yes
   roles:
     - { role: sample, URL: overplay.google.com }
